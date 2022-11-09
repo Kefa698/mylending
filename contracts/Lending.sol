@@ -6,6 +6,8 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 
+error TokenNotAllowed(address token);
+
 contract Lending is ReentrancyGuard, Ownable {
     mapping(address => address) public s_tokenToPricefeed;
     address[] public s_allowedTokens;
@@ -21,4 +23,12 @@ contract Lending is ReentrancyGuard, Ownable {
     // At 80% Loan to Value Ratio, the loan can be liquidated
     uint256 public constant LIQUIDATION_THRESHOLD = 80;
     uint256 public constant MIN_HEALH_FACTOR = 1e18;
+
+    ////modifiers////////////////
+    modifier isAllowedTokeb(address token) {
+        if (s_allowedTokens[token] == address(0)) {
+            revert TokenNotAllowed(token);
+        }
+        _;
+    }
 }
