@@ -26,6 +26,7 @@ contract Lending is ReentrancyGuard, Ownable {
 
     event AllowedTokenSet(address indexed token, address indexed priceFeed);
     event Deposit(address indexed account, address indexed token, uint256 indexed amount);
+    event Withdraw(address indexed account, address indexed token, uint256 indexed amount);
 
     ////modifiers////////////////
     modifier isAllowedToken(address token) {
@@ -49,6 +50,24 @@ contract Lending is ReentrancyGuard, Ownable {
         require(succes, "transfer failed");
     }
 
+    function withdraw(address token, uint256 amount) external nonReentrant moreThanZero(amount) {
+        require(s_accountToTokenDeposits[msg.sender][token] >= amount, "not eneogh funds");
+        emit Withdraw(msg.sender, token, amount);
+        _pullfunds(msg.sender, token, amount);
+        
+    }
+
+    function _pullfunds(
+        address account,
+        address token,
+        uint256 amount
+    ) private {
+        require(s_accountToTokenDeposits[account][token] >= amount, "not eneogh funds to withdraw");
+        s_accountToTokenDeposits[account][token] -= amount;
+        bool success = IERC20(token).transfer(msg.sender, amount);
+        require(success, "transfer failed");
+    }
+
     ////Dao//onlyOwner function
     function setAllowedToken(address token, address priceFeed) external onlyOwner {
         bool foundToken = false;
@@ -62,16 +81,5 @@ contract Lending is ReentrancyGuard, Ownable {
             s_tokenToPricefeed[token] = priceFeed;
             emit AllowedTokenSet(token, priceFeed);
         }
-    }
-
-    function _pullfunds(
-        address account,
-        address token,
-        uint256 amount
-    ) private {
-        require(s_accountToTokenDeposits[account][token] >= amount, "not eneogh funds to withdraw");
-        s_accountToTokenDeposits[account][token] -= amount;
-        bool success = IERC20(token).transfer(msg.sender, amount);
-        require(success, "transfer failed");
     }
 }
