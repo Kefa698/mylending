@@ -28,15 +28,7 @@ contract Lending is ReentrancyGuard, Ownable {
     event Deposit(address indexed account, address indexed token, uint256 indexed amount);
     event Withdraw(address indexed account, address indexed token, uint256 indexed amount);
 
-    ////modifiers////////////////
-    modifier isAllowedToken(address token) {
-        require(s_tokenToPricefeed[token] != address(0), "token is not allowed");
-        _;
-    }
-    modifier moreThanZero(uint256 amount) {
-        require(amount > 0, "amount should be more than zero");
-        _;
-    }
+    
 
     function depost(address token, uint256 amount)
         external
@@ -77,6 +69,15 @@ contract Lending is ReentrancyGuard, Ownable {
         AggregatorV3Interface priceFeed = AggregatorV3Interface(s_tokenToPricefeed[token]);
         (, int256 price, , , ) = priceFeed.latestRoundData();
         return (amount * 1e18) / uint256(price);
+    }
+    ////modifiers////////////////
+    modifier isAllowedToken(address token) {
+        require(s_tokenToPricefeed[token] != address(0), "token is not allowed");
+        _;
+    }
+    modifier moreThanZero(uint256 amount) {
+        require(amount > 0, "amount should be more than zero");
+        _;
     }
 
     ////Dao//onlyOwner function
