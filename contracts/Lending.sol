@@ -25,10 +25,12 @@ contract Lending is ReentrancyGuard, Ownable {
     uint256 public constant MIN_HEALH_FACTOR = 1e18;
 
     ////modifiers////////////////
-    modifier isAllowedTokeb(address token) {
-        if (s_allowedTokens[token] == address(0)) {
-            revert TokenNotAllowed(token);
-        }
+    modifier isAllowedToken(address token) {
+        require(s_tokenToPricefeed[token] != address(0), "token not allowed");
+        _;
+    }
+    modifier moreThanZero(uint256 amount) {
+        require(amount > 0, "amount should be more than zero");
         _;
     }
 }
