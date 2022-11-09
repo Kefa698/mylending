@@ -54,7 +54,6 @@ contract Lending is ReentrancyGuard, Ownable {
         require(s_accountToTokenDeposits[msg.sender][token] >= amount, "not eneogh funds");
         emit Withdraw(msg.sender, token, amount);
         _pullfunds(msg.sender, token, amount);
-        
     }
 
     function _pullfunds(
@@ -67,6 +66,14 @@ contract Lending is ReentrancyGuard, Ownable {
         bool success = IERC20(token).transfer(msg.sender, amount);
         require(success, "transfer failed");
     }
+
+    function getEthValue(address token, uint256 amount) public view returns (uint256) {
+        AggregatorV3Interface priceFeed = AggregatorV3Interface(s_tokenToPricefeed[token]);
+        (, int256 pice, , , ) = priceFeed.latestRoundData();
+        return (uint256(pice) * amount) / 1e18;
+    }
+    
+
 
     ////Dao//onlyOwner function
     function setAllowedToken(address token, address priceFeed) external onlyOwner {
