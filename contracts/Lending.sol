@@ -24,16 +24,29 @@ contract Lending is ReentrancyGuard, Ownable {
     uint256 public constant LIQUIDATION_THRESHOLD = 80;
     uint256 public constant MIN_HEALH_FACTOR = 1e18;
 
-    event AllowedTokenSet(address indexed token,address indexed priceFeed);
+    event AllowedTokenSet(address indexed token, address indexed priceFeed);
+    event Deposit(address indexed user, address indexed token, uint256 indexed amount);
 
     ////modifiers////////////////
     modifier isAllowedToken(address token) {
-        require(s_tokenToPricefeed[token] != address(0), "token not allowed");
+        require(s_tokenToPricefeed[token] != address(0), "token is not allowed");
         _;
     }
     modifier moreThanZero(uint256 amount) {
         require(amount > 0, "amount should be more than zero");
         _;
+    }
+
+    function depost(address token, uint256 amount)
+        external
+        nonReentrant
+        isAllowedToken(token)
+        moreThanZero(amount)
+    {
+        emit Deposit(msg.sender, token, amount);
+        s_accountToTokenDeposits[msg.sender][token] += amount;
+        bool succes = IERC20(token).transferFrom(msg.sender, address(this), amount);
+        require(succes, "transfer failed");
     }
 
     ////Dao//onlyOwner function
@@ -46,8 +59,8 @@ contract Lending is ReentrancyGuard, Ownable {
             if (!foundToken) {
                 s_allowedTokens.push(token);
             }
-            s_tokenToPricefeed[token]=priceFeed;
-            emit AllowedTokenSet(token,priceFeed);
+            s_tokenToPricefeed[token] = priceFeed;
+            emit AllowedTokenSet(token, priceFeed);
         }
     }
 }
