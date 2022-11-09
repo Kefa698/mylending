@@ -69,11 +69,15 @@ contract Lending is ReentrancyGuard, Ownable {
 
     function getEthValue(address token, uint256 amount) public view returns (uint256) {
         AggregatorV3Interface priceFeed = AggregatorV3Interface(s_tokenToPricefeed[token]);
-        (, int256 pice, , , ) = priceFeed.latestRoundData();
-        return (uint256(pice) * amount) / 1e18;
+        (, int256 price, , , ) = priceFeed.latestRoundData();
+        return (uint256(price) * amount) / 1e18;
     }
-    
 
+    function getTokenValusFromEth(address token, uint256 amount) public view returns (uint256) {
+        AggregatorV3Interface priceFeed = AggregatorV3Interface(s_tokenToPricefeed[token]);
+        (, int256 price, , , ) = priceFeed.latestRoundData();
+        return (amount * 1e18) / uint256(price);
+    }
 
     ////Dao//onlyOwner function
     function setAllowedToken(address token, address priceFeed) external onlyOwner {
