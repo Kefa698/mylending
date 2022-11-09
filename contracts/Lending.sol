@@ -25,7 +25,7 @@ contract Lending is ReentrancyGuard, Ownable {
     uint256 public constant MIN_HEALH_FACTOR = 1e18;
 
     event AllowedTokenSet(address indexed token, address indexed priceFeed);
-    event Deposit(address indexed user, address indexed token, uint256 indexed amount);
+    event Deposit(address indexed account, address indexed token, uint256 indexed amount);
 
     ////modifiers////////////////
     modifier isAllowedToken(address token) {
@@ -62,5 +62,16 @@ contract Lending is ReentrancyGuard, Ownable {
             s_tokenToPricefeed[token] = priceFeed;
             emit AllowedTokenSet(token, priceFeed);
         }
+    }
+
+    function _pullfunds(
+        address account,
+        address token,
+        uint256 amount
+    ) private {
+        require(s_accountToTokenDeposits[account][token] >= amount, "not eneogh funds to withdraw");
+        s_accountToTokenDeposits[account][token] -= amount;
+        bool success = IERC20(token).transfer(msg.sender, amount);
+        require(success, "transfer failed");
     }
 }
