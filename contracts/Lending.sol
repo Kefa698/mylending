@@ -28,8 +28,6 @@ contract Lending is ReentrancyGuard, Ownable {
     event Deposit(address indexed account, address indexed token, uint256 indexed amount);
     event Withdraw(address indexed account, address indexed token, uint256 indexed amount);
 
-    
-
     function depost(address token, uint256 amount)
         external
         nonReentrant
@@ -59,6 +57,17 @@ contract Lending is ReentrancyGuard, Ownable {
         require(success, "transfer failed");
     }
 
+    function getCollateralValue(address user) public view returns (uint256) {
+        uint256 totalCollateralValueInEth = 0;
+        for (uint256 i = 0; i < s_allowedTokens.length; i++) {
+            address token = s_allowedTokens[i];
+            uint256 amount = s_accountToTokenDeposits[user][token];
+            uint256 valueInEth = getEthValue(token, amount);
+            totalCollateralValueInEth += valueInEth;
+            return totalCollateralValueInEth;
+        }
+    }
+
     function getEthValue(address token, uint256 amount) public view returns (uint256) {
         AggregatorV3Interface priceFeed = AggregatorV3Interface(s_tokenToPricefeed[token]);
         (, int256 price, , , ) = priceFeed.latestRoundData();
@@ -70,6 +79,7 @@ contract Lending is ReentrancyGuard, Ownable {
         (, int256 price, , , ) = priceFeed.latestRoundData();
         return (amount * 1e18) / uint256(price);
     }
+
     ////modifiers////////////////
     modifier isAllowedToken(address token) {
         require(s_tokenToPricefeed[token] != address(0), "token is not allowed");
