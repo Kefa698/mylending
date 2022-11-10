@@ -27,6 +27,7 @@ contract Lending is ReentrancyGuard, Ownable {
     event AllowedTokenSet(address indexed token, address indexed priceFeed);
     event Deposit(address indexed account, address indexed token, uint256 indexed amount);
     event Withdraw(address indexed account, address indexed token, uint256 indexed amount);
+    event Borrow(address indexed account, address indexed token, uint256 indexed amount);
 
     function depost(address token, uint256 amount)
         external
@@ -44,7 +45,7 @@ contract Lending is ReentrancyGuard, Ownable {
         require(s_accountToTokenDeposits[msg.sender][token] >= amount, "not eneogh funds");
         emit Withdraw(msg.sender, token, amount);
         _pullfunds(msg.sender, token, amount);
-        require(healthfactor(msg.sender)>=LIQUIDATION_THRESHOLD,"platform will go insolvent");
+        require(healthfactor(msg.sender) >= LIQUIDATION_THRESHOLD, "platform will go insolvent");
     }
 
     function _pullfunds(
@@ -56,6 +57,19 @@ contract Lending is ReentrancyGuard, Ownable {
         s_accountToTokenDeposits[account][token] -= amount;
         bool success = IERC20(token).transfer(msg.sender, amount);
         require(success, "transfer failed");
+    }
+
+    function borrow(address token, uint256 amount)
+        external
+        nonReentrant
+        isAllowedToken(token)
+        moreThanZero(amount)
+    {
+        require(IERC20(token).balanceOf(address(this)) >= amount, "not eneogh funds to borrow");
+        s_accountToTokenBorrows[msg.sender][token] += amount;
+        emit Borrow(msg.sender, token, amount);
+        bool success=IERC20(token).transfer(msg.sender,amount);
+        require(success,"transfer failed");
     }
 
     function getAccountInformation(address user)
