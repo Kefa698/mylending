@@ -57,6 +57,15 @@ contract Lending is ReentrancyGuard, Ownable {
         require(success, "transfer failed");
     }
 
+    function getAccountInformation(address user)
+        public
+        view
+        returns (uint256 borrowedValueInEth, uint256 colateralValueInEth)
+    {
+        borrowedValueInEth = getAccountBorrowValue(user);
+        colateralValueInEth = getAccountCollateralValue(user);
+    }
+
     function getAccountBorrowValue(address user) public view returns (uint256) {
         uint256 totalBorrowedValueInEth = 0;
         for (uint256 i = 0; i < s_allowedTokens.length; i++) {
