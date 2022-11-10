@@ -44,6 +44,7 @@ contract Lending is ReentrancyGuard, Ownable {
         require(s_accountToTokenDeposits[msg.sender][token] >= amount, "not eneogh funds");
         emit Withdraw(msg.sender, token, amount);
         _pullfunds(msg.sender, token, amount);
+        require(healthfactot)
     }
 
     function _pullfunds(
@@ -98,6 +99,14 @@ contract Lending is ReentrancyGuard, Ownable {
         AggregatorV3Interface priceFeed = AggregatorV3Interface(s_tokenToPricefeed[token]);
         (, int256 price, , , ) = priceFeed.latestRoundData();
         return (amount * 1e18) / uint256(price);
+    }
+
+    function healthfactor(address acoount) public view returns (uint256) {
+        (uint256 borrowedValueInEth, uint256 collateralValueInEth) = getAccountInformation(acoount);
+        uint256 collateralAdjustedThreshold = ((collateralValueInEth * LIQUIDATION_THRESHOLD) /
+            100);
+        if (borrowedValueInEth == 0) return 100e18;
+        return (collateralAdjustedThreshold * 1e18) / borrowedValueInEth;
     }
 
     ////modifiers////////////////
