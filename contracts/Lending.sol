@@ -44,7 +44,7 @@ contract Lending is ReentrancyGuard, Ownable {
         require(s_accountToTokenDeposits[msg.sender][token] >= amount, "not eneogh funds");
         emit Withdraw(msg.sender, token, amount);
         _pullfunds(msg.sender, token, amount);
-        require(healthfactot)
+        require(healthfactor(msg.sender)>=LIQUIDATION_THRESHOLD,"platform will go insolvent");
     }
 
     function _pullfunds(
