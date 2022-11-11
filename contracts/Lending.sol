@@ -29,6 +29,13 @@ contract Lending is ReentrancyGuard, Ownable {
     event Withdraw(address indexed account, address indexed token, uint256 indexed amount);
     event Borrow(address indexed account, address indexed token, uint256 indexed amount);
     event Repay(address indexed account, address indexed token, uint256 indexed amount);
+    event Liquidate(
+        address indexed account,
+        address indexed repayToken,
+        address indexed rewardToken,
+        uint256 halfDebtInEth,
+        address liquidator
+    );
 
     function depost(address token, uint256 amount)
         external
@@ -91,6 +98,25 @@ contract Lending is ReentrancyGuard, Ownable {
         s_accountToTokenBorrows[account][token] -= amount;
         bool success = IERC20(token).transferFrom(msg.sender, token, amount);
         require(success, "transfer failed");
+    }
+
+    function liquidate(
+        address account,
+        address repayToken,
+        address rewardToken
+    ) external {
+        require(healthfactor(account) < MIN_HEALH_FACTOR, "account cant be liquidated");
+        uint256 halfDebt = (s_accountToTokenBorrows[account][repayToken]) / 2;
+        uint256 halfDebtInEth = getEthValue(repayToken, halfDebt);
+        require(halfDebtInEth > 0, "choose a different repay token");
+        uint256 rewardAmounInEth = (halfDebtInEth * LIQUIDATION_REWARD) / 100;
+        uint256 totalRewardAmountInRewardToken = getTokenValusFromEth(
+            rewardToken,
+            rewardAmounInEth + halfDebtInEth
+        );
+        emit Liquidate(account, repayToken, rewardToken, halfDebtInEth, msg.sender);
+        _repay(account, repayToken, halfDebt);
+        _pullfunds(account, rewardToken, totalRewardAmountInRewardToken);
     }
 
     function getAccountInformation(address user)
