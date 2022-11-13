@@ -24,17 +24,32 @@ const BTC_UPDATED_PRICE = ethers.utils.parseEther("1.9")
               wbtcEthPriceFeed = await ethers.getContract("WBTCETHPriceFeed")
           })
           describe("getEthValue", function () {
-            // 1 DAI = $1 & ETH = $1,0000
-            it("Correctly gets DAI price", async function () {
-                const oneEthOfDai = ethers.utils.parseEther("1000")
-                const ethValueOfDai = await lending.getEthValue(dai.address, oneEthOfDai)
-                assert.equal(ethValueOfDai.toString(), ethers.utils.parseEther("1").toString())
-            })
-            it("Correctly gets WBTC price", async function () {
-                // 1 WBTC = $2,000 & ETH = $1,000
-                const oneEthOfWbtc = ethers.utils.parseEther("1")
-                const ethValueOfWbtc = await lending.getEthValue(wbtc.address, oneEthOfWbtc)
-                assert.equal(ethValueOfWbtc.toString(), ethers.utils.parseEther("2").toString())
-            })
-        })
+              // 1 DAI = $1 & ETH = $1,0000
+              it("Correctly gets DAI price", async function () {
+                  const oneEthOfDai = ethers.utils.parseEther("1000")
+                  const ethValueOfDai = await lending.getEthValue(dai.address, oneEthOfDai)
+                  assert.equal(ethValueOfDai.toString(), ethers.utils.parseEther("1").toString())
+              })
+              it("Correctly gets WBTC price", async function () {
+                  // 1 WBTC = $2,000 & ETH = $1,000
+                  const oneEthOfWbtc = ethers.utils.parseEther("1")
+                  const ethValueOfWbtc = await lending.getEthValue(wbtc.address, oneEthOfWbtc)
+                  assert(ethValueOfWbtc.toString() == ethers.utils.parseEther("2").toString())
+              })
+          })
+          describe("getTokenValueFromEth", function () {
+              it("correctly gets dai price", async function () {
+                  const oneDaiOfEth = ethers.utils.parseEther("0.001")
+                  const daiValueOfEth = await lending.getTokenValueFromEth(dai.address, oneDaiOfEth)
+                  assert(daiValueOfEth.toString() == ethers.utils.parseEther("1").toString())
+              })
+              it("correctly gets wbtc price", async function () {
+                  const oneWbtcOfEth = ethers.utils.parseEther("2")
+                  const wbtcValueOfEth = await lending.getTokenValueFromEth(
+                      wbtc.address,
+                      oneWbtcOfEth
+                  )
+                  assert(wbtcValueOfEth.toString() == ethers.utils.parseEther("1").toString())
+              })
+          })
       })
