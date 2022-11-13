@@ -38,18 +38,38 @@ const BTC_UPDATED_PRICE = ethers.utils.parseEther("1.9")
               })
           })
           describe("getTokenValueFromEth", function () {
+              // 1 DAI = $1 & ETH = $1,0000
               it("correctly gets dai price", async function () {
                   const oneDaiOfEth = ethers.utils.parseEther("0.001")
                   const daiValueOfEth = await lending.getTokenValueFromEth(dai.address, oneDaiOfEth)
                   assert(daiValueOfEth.toString() == ethers.utils.parseEther("1").toString())
               })
               it("correctly gets wbtc price", async function () {
+                  // 1 WBTC = $2,000 & ETH = $1,000
                   const oneWbtcOfEth = ethers.utils.parseEther("2")
                   const wbtcValueOfEth = await lending.getTokenValueFromEth(
                       wbtc.address,
                       oneWbtcOfEth
                   )
                   assert(wbtcValueOfEth.toString() == ethers.utils.parseEther("1").toString())
+              })
+          })
+          describe("deposit", function () {
+              it("deposits and emits an event", async function () {
+                  await wbtc.approve(lending.address, depositAmount)
+                  expect(await lending.deposit(wbtc.address, depositAmount)).to.emit("Deposit")
+                  const accountInfo = await lending.getAccountInformation(deployer.address)
+                  assert(accountInfo[0].toString() == ethers.utils.parseEther("0").toString())
+                  ///wbtc is 2x eth price
+                  assert(accountInfo[1].toString() == depositAmount.mul(2).toString())
+                  const healthfactor = await lending.healthFactor(deployer.address)
+                  assert(healthfactor.toString() == ethers.utils.parseEther("100").toString())
+              })
+              it("only allowed tokens can be deposited", async function () {
+                  await randomToken.approve(lending.address, depositAmount)
+                  await expect(
+                      lending.deposit(randomToken.address, depositAmount)
+                  ).to.be.revertedWith("TokenNotAllowed")
               })
           })
       })
