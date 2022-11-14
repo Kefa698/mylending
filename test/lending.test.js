@@ -72,4 +72,21 @@ const BTC_UPDATED_PRICE = ethers.utils.parseEther("1.9")
                   ).to.be.revertedWith("TokenNotAllowed")
               })
           })
+          describe("withdraw", function () {
+              it("withraws and emits an event", async function () {
+                  await wbtc.approve(lending.address, depositAmount)
+                  await lending.deposit(wbtc.address, depositAmount)
+                  expect(await lending.withdraw(wbtc.address, depositAmount)).to.emit("Withdraw")
+                  const accountInfo = await lending.getAccountInformation(deployer.address)
+                  assert(accountInfo[0].toString() == ethers.utils.parseEther("0"))
+                  assert(accountInfo[1].toString() == ethers.utils.parseEther("0"))
+              })
+              it("reverts if there isnt eneogh money", async function () {
+                  await wbtc.approve(lending.address, depositAmount)
+                  await lending.depositAmount(wbtc.address, depositAmount)
+                  await expect(
+                      lending.withdraw(wbtc.address, depositAmount.mul(2))
+                  ).to.be.revertedWith("Not enough funds")
+              })
+          })
       })
