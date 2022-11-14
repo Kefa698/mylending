@@ -83,7 +83,7 @@ const BTC_UPDATED_PRICE = ethers.utils.parseEther("1.9")
               })
               it("reverts if there isnt eneogh money", async function () {
                   await wbtc.approve(lending.address, depositAmount)
-                  await lending.depositAmount(wbtc.address, depositAmount)
+                  await lending.deposit(wbtc.address, depositAmount)
                   await expect(
                       lending.withdraw(wbtc.address, depositAmount.mul(2))
                   ).to.be.revertedWith("Not enough funds")
