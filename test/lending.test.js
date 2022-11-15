@@ -89,4 +89,53 @@ const BTC_UPDATED_PRICE = ethers.utils.parseEther("1.9")
                   ).to.be.revertedWith("Not enough funds")
               })
           })
+          describe("borrow", function () {
+              it("cant pull money that would make the platform go insolvent", async function () {
+                  await wbtc.approve(lending.address, depositAmount)
+                  await lending.deposit(wbtc.address, depositAmount)
+                  // Setup the contract to have enough DAI to borrow
+                  // Our daiBorrowAmount is set to 80% of 2000 + 1, since the threshold is 80%
+                  // And this should be enought to not let us borrow this amount
+                  const daiBorrowAmount = ethers.utils.parseEther(
+                      (2000 * (threshold.toNumber() / 100) + 1).toString()
+                  )
+                  const daiEthValue = await lending.getEthValue(dai.address, daiBorrowAmount)
+                  const wbtcEthValue = await lending.getEthValue(wbtc.address, depositAmount)
+
+                  console.log(
+                      `Going to attempt to borrow ${ethers.utils.formatEther(
+                          daiEthValue
+                      )} ETH worth of DAI (${ethers.utils.formatEther(daiBorrowAmount)} DAI)\n`
+                  )
+                  console.log(
+                      `With only ${ethers.utils.formatEther(
+                          wbtcEthValue
+                      )} ETH of WBTC (${ethers.utils.formatEther(
+                          depositAmount
+                      )} WBTC) deposited. \n`
+                  )
+                  await dai.transfer(player.address, daiBorrowAmount)
+                  const playerConnectedLending = await lending.connect(player)
+                  const playerConnectedDai = await dai.connect(player)
+                  await playerConnectedDai.approve(lending.address, daiBorrowAmount)
+                  await playerConnectedLending.deposit(dai.address, daiBorrowAmount)
+
+                  //jst to be safe..lets connect back
+                  await dai.connect(deployer)
+                  await lending.connect(deployer)
+                  const playerAccount = await lending.getAccountInformation(player.address)
+                  const deployerAccount = await lending.getAccountInformation(deployer.address)
+                  assert(playerAccount[0].toString() == "0")
+                  assert(playerAccount[1].toString() == daiEthValue)
+                  assert(deployerAccount[0].toString() == "0")
+                  assert(deployerAccount[1].toString() == wbtcEthValue)
+                  ///then lets attempt to borrow
+                  await expect(lending.borrow(dai.address, daiBorrowAmount)).to.be.revertedWith(
+                      "Platform will go insolvent!"
+                  )
+              })
+              it("borrows and emits an event",async function(){
+                await lending
+              })
+          })
       })
