@@ -166,14 +166,14 @@ const BTC_UPDATED_PRICE = ethers.utils.parseEther("1.9")
                   await dai.connect(deployer)
                   await lending.connect(deployer)
                   const playerAccount = await lending.getAccountInformation(player.address)
-                  const deployerAccount = await lending.getAccountInformation(deployer.address)
+                  let deployerAccount = await lending.getAccountInformation(deployer.address)
                   assert(playerAccount[0].toString() == "0")
                   assert(playerAccount[1].toString() == daiEthValue)
                   assert(deployerAccount[0].toString() == "0")
                   assert(deployerAccount[1].toString() == wbtcEthValue)
                   ///then lets borrow
                   expect(await lending.borrow(dai.address, daiBorrowAmount)).to.emit("Borrow")
-                  
+
                   const healthFactor = await lending.healthFactor(deployer.address)
                   deployerAccount = await lending.getAccountInformation(deployer.address)
                   assert.equal(deployerAccount[0].toString(), daiEthValue)
